@@ -1,0 +1,23 @@
+{
+  "name": "lawfirm-site",
+  "version": "1.0.0",
+  "description": "Professional law firm website for Cloudflare Pages deployment",
+  "scripts": {
+    "deploy": "wrangler pages deploy public",
+    "dev": "wrangler pages dev public",
+    "setup": "./deploy.sh",
+    "db:create": "wrangler d1 create lawfirm-db",
+    "db:schema": "wrangler d1 execute lawfirm-db --file=./database/schema.sql",
+    "db:backup": "wrangler d1 export lawfirm-db --output=backup-$(date +%Y%m%d).sql",
+    "db:query": "wrangler d1 execute lawfirm-db --command",
+    "logs": "wrangler pages deployment tail",
+    "build": "echo 'Static site - no build needed'",
+    "test": "echo 'No tests configured'"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "keywords": ["law-firm", "website", "cloudflare-pages"],
+  "author": "Sharma and Associates",
+  "license": "MIT"
+} 

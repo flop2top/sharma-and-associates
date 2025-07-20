@@ -1,0 +1,94 @@
+{
+  "name": "Sharma & Associates - Legal Services",
+  "short_name": "Sharma Law",
+  "description": "Premier legal services in India with 25+ years of experience in family law, divorce, and property disputes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e293b",
+  "theme_color": "#1e293b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["business", "legal", "professional"],
+  "lang": "en-IN",
+  "scope": "/",
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/mobile.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Contact Us",
+      "short_name": "Contact",
+      "description": "Get in touch with our legal experts",
+      "url": "/contact.html",
+      "icons": [
+        {
+          "src": "/icons/contact-96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Our Services",
+      "short_name": "Services",
+      "description": "Explore our legal services",
+      "url": "/services.html",
+      "icons": [
+        {
+          "src": "/icons/services-96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Meet Our Team",
+      "short_name": "Team",
+      "description": "Learn about our experienced attorneys",
+      "url": "/team.html",
+      "icons": [
+        {
+          "src": "/icons/team-96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+} 

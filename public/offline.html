@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Sharma & Associates</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .offline-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-hero);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .offline-content {
+            max-width: 600px;
+            animation: slideInUp 0.8s ease-out;
+        }
+        
+        .offline-icon {
+            font-size: 6rem;
+            margin-bottom: 2rem;
+            animation: pulse 2s infinite;
+        }
+        
+        .retry-button {
+            display: inline-block;
+            background: var(--gradient-gold);
+            color: var(--primary-900);
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .retry-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+        
+        .offline-features {
+            margin-top: 3rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+        
+        .offline-feature {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .connection-status {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .connection-status.online {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        
+        .connection-status.offline {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-content">
+            <div class="offline-icon">📡</div>
+            
+            <h1>You're Currently Offline</h1>
+            <p style="font-size: 1.25rem; margin-bottom: 2rem; opacity: 0.9;">
+                No internet connection detected. Don't worry - you can still browse some pages that have been cached.
+            </p>
+            
+            <div class="connection-status offline" id="connectionStatus">
+                ⚠️ No internet connection
+            </div>
+            
+            <button class="retry-button" onclick="checkConnection()">
+                🔄 Check Connection
+            </button>
+            
+            <div class="offline-features">
+                <div class="offline-feature">
+                    <h3>🏠 Cached Pages</h3>
+                    <p>You can still access previously visited pages that are stored locally.</p>
+                    <a href="index.html" style="color: var(--accent-gold); text-decoration: none;">← Go to Home</a>
+                </div>
+                
+                <div class="offline-feature">
+                    <h3>📞 Emergency Contact</h3>
+                    <p>For urgent legal matters, call us directly even offline.</p>
+                    <a href="tel:+911112345678" style="color: var(--accent-gold); text-decoration: none;">Call: +91 11 1234 5678</a>
+                </div>
+                
+                <div class="offline-feature">
+                    <h3>📝 Saved Forms</h3>
+                    <p>Your form submissions are saved and will be sent when you're back online.</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 3rem; opacity: 0.7;">
+                <p><small>This page works offline thanks to our Progressive Web App technology.</small></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isOnline = navigator.onLine;
+        const statusEl = document.getElementById('connectionStatus');
+        
+        function updateConnectionStatus() {
+            isOnline = navigator.onLine;
+            
+            if (isOnline) {
+                statusEl.textContent = '✅ Connection restored!';
+                statusEl.className = 'connection-status online';
+                
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            } else {
+                statusEl.textContent = '⚠️ No internet connection';
+                statusEl.className = 'connection-status offline';
+            }
+        }
+        
+        function checkConnection() {
+            statusEl.textContent = '🔄 Checking connection...';
+            statusEl.className = 'connection-status offline';
+            
+            // Try to fetch a small resource to check connectivity
+            fetch('/manifest.json', { 
+                method: 'HEAD',
+                cache: 'no-cache'
+            })
+            .then(response => {
+                if (response.ok) {
+                    statusEl.textContent = '✅ Connection restored!';
+                    statusEl.className = 'connection-status online';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    throw new Error('No connection');
+                }
+            })
+            .catch(() => {
+                statusEl.textContent = '⚠️ Still offline - please check your connection';
+                statusEl.className = 'connection-status offline';
+            });
+        }
+        
+        // Listen for connection changes
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        
+        // Auto-check connection every 30 seconds
+        setInterval(() => {
+            if (!isOnline) {
+                checkConnection();
+            }
+        }, 30000);
+        
+        // Initial status check
+        updateConnectionStatus();
+        
+        // Add some interactive features
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add click effects to feature cards
+            document.querySelectorAll('.offline-feature').forEach(feature => {
+                feature.addEventListener('click', () => {
+                    feature.style.transform = 'scale(1.02)';
+                    setTimeout(() => {
+                        feature.style.transform = 'scale(1)';
+                    }, 150);
+                });
+            });
+            
+            // Add keyboard shortcut for retry
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 'r') {
+                    e.preventDefault();
+                    checkConnection();
+                }
+            });
+        });
+        
+        // Service worker message listener
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data.type === 'REQUEST_RETRIED' && event.data.success) {
+                    statusEl.textContent = '✅ Connection restored! Forms submitted successfully.';
+                    statusEl.className = 'connection-status online';
+                }
+            });
+        }
+    </script>
+</body>
+</html> 
