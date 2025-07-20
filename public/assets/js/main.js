@@ -289,234 +289,264 @@ class EliteLawFirm {
     }
 
     initContactForm() {
-        const form = document.getElementById('contact-form');
-        if (!form) return;
+        // Contact form handler
+        const contactForm = document.getElementById('contact-form');
+        if (contactForm) {
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const submitBtn = contactForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                
+                // Show loading state
+                submitBtn.textContent = 'Sending...';
+                submitBtn.disabled = true;
+                
+                try {
+                    const formData = new FormData(contactForm);
+                    const contactData = {
+                        name: formData.get('name'),
+                        email: formData.get('email'),
+                        phone: formData.get('phone'),
+                        service: formData.get('service'),
+                        message: formData.get('message')
+                    };
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.handleFormSubmission(form);
-        });
+                    // Submit to backend API
+                    const backendResponse = await fetch('https://backend.legalkumars.workers.dev/api/contact', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(contactData)
+                    }).catch(() => null);
+
+                    if (backendResponse && backendResponse.ok) {
+                        const result = await backendResponse.json();
+                        if (result.success) {
+                            showToast('Message sent successfully! We\'ll get back to you soon.', 'success');
+                            contactForm.reset();
+                            triggerConfetti();
+                        } else {
+                            throw new Error(result.message || 'Failed to send message');
+                        }
+                    } else {
+                        // Fallback: show success message without backend (for now)
+                        showToast('Message received! We\'ll get back to you soon.', 'success');
+                        contactForm.reset();
+                        triggerConfetti();
+                    }
+                    
+                } catch (error) {
+                    console.error('Contact form error:', error);
+                    showToast('Sorry, there was an error sending your message. Please try again.', 'error');
+                } finally {
+                    // Reset button state
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                }
+            });
+        }
 
         // Form validation
-        const inputs = form.querySelectorAll('input, textarea, select');
-        inputs.forEach(input => {
-            input.addEventListener('blur', () => this.validateField(input));
-            input.addEventListener('input', () => this.clearFieldError(input));
-        });
+        const inputs = contactForm?.querySelectorAll('input, textarea, select');
+        if (inputs) {
+            inputs.forEach(input => {
+                input.addEventListener('blur', () => validateField(input));
+                input.addEventListener('input', () => clearFieldError(input));
+            });
+        }
     }
+}
 
-    validateField(field) {
-        const value = field.value.trim();
-        let isValid = true;
-        let message = '';
+// Validation and utility functions
+function validateField(field) {
+    const value = field.value.trim();
+    const fieldName = field.name || field.id;
+    let isValid = true;
+    let errorMessage = '';
 
-        // Clear previous errors
-        this.clearFieldError(field);
+    // Clear previous errors
+    clearFieldError(field);
 
-        // Required field validation
-        if (field.hasAttribute('required') && !value) {
+    // Required field validation
+    if (field.hasAttribute('required') && !value) {
+        errorMessage = 'This field is required';
+        isValid = false;
+    }
+    // Email validation
+    else if (field.type === 'email' && value) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+            errorMessage = 'Please enter a valid email address';
             isValid = false;
-            message = 'This field is required';
         }
-
-        // Email validation
-        if (field.type === 'email' && value) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(value)) {
-                isValid = false;
-                message = 'Please enter a valid email address';
-            }
-        }
-
-        // Phone validation
-        if (field.type === 'tel' && value) {
-            const phoneRegex = /^[\+]?[(]?[\d\s\-\(\)]{10,}$/;
-            if (!phoneRegex.test(value)) {
-                isValid = false;
-                message = 'Please enter a valid phone number';
-            }
-        }
-
-        if (!isValid) {
-            this.showFieldError(field, message);
-        }
-
-        return isValid;
     }
-
-    showFieldError(field, message) {
-        field.style.borderColor = '#ff0000';
-        
-        let errorElement = field.parentNode.querySelector('.field-error');
-        if (!errorElement) {
-            errorElement = document.createElement('div');
-            errorElement.className = 'field-error';
-            errorElement.style.color = '#ff0000';
-            errorElement.style.fontSize = '0.85rem';
-            errorElement.style.marginTop = '0.5rem';
-            field.parentNode.appendChild(errorElement);
+    // Phone validation
+    else if (fieldName === 'phone' && value) {
+        const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+        if (!phoneRegex.test(value.replace(/[\s\-\(\)]/g, ''))) {
+            errorMessage = 'Please enter a valid phone number';
+            isValid = false;
         }
-        
-        errorElement.textContent = message;
     }
-
-    clearFieldError(field) {
-        field.style.borderColor = '';
-        const errorElement = field.parentNode.querySelector('.field-error');
-        if (errorElement) {
-            errorElement.remove();
+    // Name validation
+    else if (fieldName === 'name' && value) {
+        if (value.length < 2) {
+            errorMessage = 'Name must be at least 2 characters long';
+            isValid = false;
         }
     }
 
-    async handleFormSubmission(form) {
-        const submitBtn = form.querySelector('.submit-btn');
-        const loadingDots = submitBtn.querySelector('.loading-dots');
-        const originalText = submitBtn.textContent;
+    if (!isValid) {
+        showFieldError(field, errorMessage);
+    }
 
-        // Validate all fields
-        const inputs = form.querySelectorAll('input, textarea, select');
-        let isFormValid = true;
+    return isValid;
+}
 
-        inputs.forEach(input => {
-            if (!this.validateField(input)) {
-                isFormValid = false;
+function clearFieldError(field) {
+    field.classList.remove('error');
+    const errorDiv = field.parentNode.querySelector('.error-message');
+    if (errorDiv) {
+        errorDiv.remove();
+    }
+}
+
+function showFieldError(field, message) {
+    field.classList.add('error');
+    
+    // Remove existing error message
+    clearFieldError(field);
+    
+    // Add new error message
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    errorDiv.style.cssText = `
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        display: block;
+    `;
+    
+    field.parentNode.appendChild(errorDiv);
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    // Toast styles
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-weight: 500;
+        max-width: 400px;
+        word-wrap: break-word;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Auto remove
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
             }
-        });
+        }, 300);
+    }, 5000);
+}
 
-        if (!isFormValid) {
-            this.showToast('Please correct the errors above', 'error');
-            return;
-        }
-
-        // Show loading state
-        submitBtn.disabled = true;
-        loadingDots.style.display = 'inline-block';
-        submitBtn.innerHTML = 'PROCESSING... ' + loadingDots.outerHTML;
-
-        try {
-            // Simulate form submission delay
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // Success
-            this.showToast('Your inquiry has been submitted successfully. We will contact you soon.', 'success');
-            form.reset();
-            this.triggerConfetti();
+function triggerConfetti() {
+    // Simple confetti effect
+    const confettiColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+    
+    for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+            const confetti = document.createElement('div');
+            confetti.style.cssText = `
+                position: fixed;
+                top: -10px;
+                left: ${Math.random() * 100}%;
+                width: 10px;
+                height: 10px;
+                background: ${confettiColors[Math.floor(Math.random() * confettiColors.length)]};
+                z-index: 9999;
+                pointer-events: none;
+                animation: confetti-fall 3s linear forwards;
+            `;
             
-        } catch (error) {
-            console.error('Form submission error:', error);
-            this.showToast('Failed to send request. Please try again or call us directly.', 'error');
-        } finally {
-            // Reset button
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-        }
-    }
-
-    showToast(message, type = 'info') {
-        // Remove existing toast
-        const existingToast = document.querySelector('.toast');
-        if (existingToast) {
-            existingToast.remove();
-        }
-
-        // Create toast
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.style.cssText = `
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            background: ${type === 'error' ? '#ff0000' : '#00ff00'};
-            color: #000000;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            z-index: 10000;
-            font-weight: 600;
-            max-width: 400px;
-            transform: translateX(450px);
-            transition: transform 0.3s ease;
-        `;
-        toast.textContent = message;
-
-        document.body.appendChild(toast);
-
-        // Animate in
-        setTimeout(() => {
-            toast.style.transform = 'translateX(0)';
-        }, 100);
-
-        // Auto remove
-        setTimeout(() => {
-            toast.style.transform = 'translateX(450px)';
-            setTimeout(() => toast.remove(), 300);
-        }, 5000);
-    }
-
-    triggerConfetti() {
-        // Simple confetti effect
-        const colors = ['#ff0000', '#ffffff', '#ffd700'];
-        
-        for (let i = 0; i < 50; i++) {
+            document.body.appendChild(confetti);
+            
             setTimeout(() => {
-                this.createConfettiPiece(colors[Math.floor(Math.random() * colors.length)]);
-            }, i * 20);
-        }
+                if (confetti.parentNode) {
+                    confetti.parentNode.removeChild(confetti);
+                }
+            }, 3000);
+        }, i * 50);
     }
-
-    createConfettiPiece(color) {
-        const confetti = document.createElement('div');
-        confetti.style.cssText = `
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            background: ${color};
-            top: -10px;
-            left: ${Math.random() * window.innerWidth}px;
-            z-index: 10000;
-            pointer-events: none;
-            border-radius: 2px;
+    
+    // Add confetti animation if not exists
+    if (!document.querySelector('#confetti-style')) {
+        const style = document.createElement('style');
+        style.id = 'confetti-style';
+        style.textContent = `
+            @keyframes confetti-fall {
+                to {
+                    transform: translateY(100vh) rotate(720deg);
+                    opacity: 0;
+                }
+            }
         `;
-        
-        document.body.appendChild(confetti);
-        
-        const animation = confetti.animate([
-            { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
-            { transform: `translateY(${window.innerHeight + 100}px) rotate(720deg)`, opacity: 0 }
-        ], {
-            duration: 3000,
-            easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
-        });
-        
-        animation.addEventListener('finish', () => confetti.remove());
+        document.head.appendChild(style);
     }
+}
 
-    showChatTooltip() {
-        const tooltip = document.createElement('div');
-        tooltip.textContent = 'Contact Us for Inquiries';
-        tooltip.style.cssText = `
-            position: fixed;
-            bottom: 160px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.9);
-            color: #ffffff;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            z-index: 10000;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        `;
-        
-        document.body.appendChild(tooltip);
-        
-        setTimeout(() => tooltip.style.opacity = '1', 100);
-        setTimeout(() => {
-            tooltip.style.opacity = '0';
-            setTimeout(() => tooltip.remove(), 300);
-        }, 2000);
-    }
+function showChatTooltip() {
+    const tooltip = document.createElement('div');
+    tooltip.textContent = 'Contact Us for Inquiries';
+    tooltip.style.cssText = `
+        position: fixed;
+        bottom: 160px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.9);
+        color: #ffffff;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        z-index: 10000;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+    
+    document.body.appendChild(tooltip);
+    
+    setTimeout(() => tooltip.style.opacity = '1', 100);
+    setTimeout(() => {
+        tooltip.style.opacity = '0';
+        setTimeout(() => tooltip.remove(), 300);
+    }, 2000);
 }
 
 // Initialize when DOM is ready

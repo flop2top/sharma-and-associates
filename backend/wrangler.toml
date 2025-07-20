@@ -1,0 +1,14 @@
+name = "sharma-legal-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-19"
+compatibility_flags = ["nodejs_compat"]
+
+kv_namespaces = [
+  { binding = "LAW_FIRM_DB", id = "fb1fcb8e295643a9a2913d33915763a5" }
+]
+
+[vars]
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "sharma@2024"
+JWT_SECRET = "your-super-secret-jwt-key-change-in-production"
+FRONTEND_URL = "https://64131eb9.sharmalegals.pages.dev" 
